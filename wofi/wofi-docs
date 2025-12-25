@@ -1,0 +1,12 @@
+Wofi has 3 main files used for configuration. All files are completely optional.
+
+1.
+    The config file which defaults to $XDG_CONFIG_HOME/wofi/config.
+2.
+    The CSS file which defaults to $XDG_CONFIG_HOME/wofi/style.css.
+3.
+    The colors file which defaults to the pywal cache $XDG_CACHE_HOME/wal/colors.
+        -c, --conf=PATH
+    Specifies the config file to use.
+        -s, --style=PATH
+    Specifies the CSS file to use as the stylesheet.
