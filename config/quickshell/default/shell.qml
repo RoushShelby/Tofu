@@ -15,7 +15,7 @@ ShellRoot {
         ]
 
         rightWidgets: [
-            SystemInfo {}
+            
         ]
     }
 }
