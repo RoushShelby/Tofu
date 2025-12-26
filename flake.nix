@@ -20,10 +20,12 @@
         packages = with pkgs; [
           quickshell
           matugen
+          fish
         ];
 
         shellHook = ''
           echo "Quickly! Shell the Tofu!"
+          exec fish
         '';
       };
   };
