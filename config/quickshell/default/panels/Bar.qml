@@ -19,7 +19,6 @@ PanelWindow {
     implicitHeight: 42
     color: "transparent"
     
-    // Single solid bar background
     Rectangle {
         id: barBackground
         anchors {
@@ -31,7 +30,6 @@ PanelWindow {
         radius: 10
         color: Qt.rgba(Colors.background.r, Colors.background.g, Colors.background.b, 0.6)
         
-        // Subtle outer glow effect using multiple borders
         Rectangle {
             anchors.fill: parent
             anchors.margins: -1

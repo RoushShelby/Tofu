@@ -3,40 +3,72 @@ import Quickshell
 import Quickshell.Hyprland
 import "../theme"
 
-Row {
-    spacing: 4
+Rectangle {
+    id: workspacesContainer
+    width: workspacesRow.implicitWidth + 16
+    height: 24
+    radius: 12
+    color: Qt.rgba(Colors.surface.r, Colors.surface.g, Colors.surface.b, 0.3)
+    border.width: 1
+    border.color: Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.2)
     
-    Repeater {
-        model: Hyprland.workspaces
+    Row {
+        id: workspacesRow
+        anchors.centerIn: parent
+        spacing: 6
         
-        delegate: Rectangle {
-            required property HyprlandWorkspace modelData
+        Repeater {
+            model: Hyprland.workspaces
             
-            width: 24
-            height: 16
-            radius: 8
-            
-            color: {
-                if (modelData.focused) return Colors.accent
-                if (modelData.active) return Colors.surfaceVariant
-                if (modelData.toplevels.length > 0) return Colors.surface
-                return "transparent"
-            }
-            
-            border.width: modelData.toplevels.length > 0 ? 0 : 1
-            border.color: Colors.surfaceVariant
-            
-            Text {
-                anchors.centerIn: parent
-                text: modelData.id
-                color: modelData.focused ? Colors.background : Colors.foreground
-                font.pixelSize: 10
-                font.weight: Font.Medium
-            }
-            
-            MouseArea {
-                anchors.fill: parent
-                onClicked: Hyprland.dispatch("workspace", modelData.id.toString())
+            delegate: Rectangle {
+                required property HyprlandWorkspace modelData
+                
+                width: 16
+                height: 16
+                radius: 8
+                
+                property bool isEmpty: modelData.toplevels.length === 0
+                property bool isActive: modelData.focused || modelData.active
+                
+                color: {
+                    if (isActive) return Colors.accent
+                    if (isEmpty) return "transparent"
+                    return Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.4)
+                }
+                
+                border.width: isEmpty ? 1 : 0
+                border.color: Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.3)
+                
+                Behavior on color {
+                    ColorAnimation { duration: 200 }
+                }
+                
+                Behavior on border.color {
+                    ColorAnimation { duration: 200 }
+                }
+                
+                MouseArea {
+                    id: mouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: Hyprland.dispatch("workspace", modelData.id.toString())
+                    
+                    onEntered: {
+                        if (!parent.isActive) {
+                            parent.color = Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.6)
+                        }
+                    }
+                    
+                    onExited: {
+                        if (!parent.isActive) {
+                            if (parent.isEmpty) {
+                                parent.color = "transparent"
+                            } else {
+                                parent.color = Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.4)
+                            }
+                        }
+                    }
+                }
             }
         }
     }
