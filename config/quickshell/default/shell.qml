@@ -11,11 +11,11 @@ ShellRoot {
         ]
 
         centerWidgets: [
-            Workspaces {}
+            Testing {}
         ]
 
         rightWidgets: [
-            
+            Workspaces {}
         ]
     }
 }
