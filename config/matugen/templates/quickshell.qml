@@ -6,4 +6,5 @@ QtObject {
     readonly property color foreground: "{{colors.on_background.default.hex}}"
     readonly property color accent: "{{colors.primary.default.hex}}"
     readonly property color surface: "{{colors.surface.default.hex}}"
+    readonly property color surfaceVariant: "{{colors.surface_variant.default.hex}}"
 }

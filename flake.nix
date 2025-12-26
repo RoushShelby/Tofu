@@ -23,14 +23,7 @@
         ];
 
         shellHook = ''
-          echo "Quickshell development environment loaded"
-          echo ""
-          echo "Available commands:"
-          echo "  quickshell -c config/quickshell/shell.qml  - Run Quickshell"
-          echo "  matugen image <path>                        - Generate theme"
-          echo ""
-          echo "Quick start:"
-          echo "  ./scripts/apply-theme.sh /path/to/wallpaper.png"
+          echo "Quickly! Shell the Tofu!"
         '';
       };
   };
