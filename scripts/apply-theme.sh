@@ -1,12 +1,30 @@
 #!/usr/bin/env bash
-set -e
 
-WALL="${1:-$HOME/wallpaper.png}"
-
-if [[ ! -f "$WALL" ]]; then
-    echo "Wallpaper not found: $WALL"
+if [ -z "$1" ]; then
+    echo "Usage: $0 /path/to/wallpaper.png"
     exit 1
 fi
 
-matugen image "$WALL"
-systemctl --user restart quickshell
+WALLPAPER="$1"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+cd "$PROJECT_ROOT/config/matugen"
+
+if [ ! -f "$WALLPAPER" ]; then
+    echo "Error: Wallpaper not found: $WALLPAPER"
+    exit 1
+fi
+
+echo "Generating colors from: $WALLPAPER"
+matugen image "$WALLPAPER" --config config.toml
+
+if [ $? -eq 0 ]; then
+    echo "✓ Colors generated!"
+    echo ""
+    echo "Restart quickshell to see changes:"
+    echo "  Ctrl+C and run: quickshell -c config/quickshell/default"
+else
+    echo "✗ Failed to generate colors"
+    exit 1
+fi

@@ -1,6 +1,6 @@
 [config]
 reload_apps = false
 
-[[config.templates]]
-input_path = "~/.config/matugen/templates/quickshell.qml"
-output_path = "~/Projects/Tofu/config/quickshell/default/theme/Colors.qml"
+[templates.quickshell]
+input_path = "templates/quickshell.qml"
+output_path = "../quickshell/default/theme/Colors.qml"

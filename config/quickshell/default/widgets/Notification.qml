@@ -1,29 +1,18 @@
 import QtQuick
+import Quickshell
 import "../theme"
 
 Item {
-    width: clockText.width + 10
+    width: notificationText.width + 10
     height: 16
     
     Text {
-        id: clockText
+        id: notificationText
         anchors.centerIn: parent
+        text: ""
         color: Colors.foreground
         font.family: "CodeNewRoman Nerd Font Propo"
         font.pixelSize: 15
-        
-        property var currentTime: new Date()
-        
-        Timer {
-            interval: 1000
-            running: true
-            repeat: true
-            onTriggered: {
-                clockText.currentTime = new Date()
-            }
-        }
-        
-        text: Qt.formatDateTime(currentTime, "hh:mm:ss AP") + " "
         
         Behavior on color {
             ColorAnimation { duration: 300; easing.type: Easing.InOutQuad }
@@ -34,12 +23,17 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         
+        onClicked: {
+            // Toggle SwayNC
+            Process.run("swaync-client", ["-t", "-sw"])
+        }
+        
         onEntered: {
-            clockText.color = Colors.accent
+            notificationText.color = Colors.accent
         }
         
         onExited: {
-            clockText.color = Colors.foreground
+            notificationText.color = Colors.foreground
         }
     }
 }

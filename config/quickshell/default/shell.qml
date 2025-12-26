@@ -6,14 +6,17 @@ ShellRoot {
     Bar {
         id: mainBar
         
+        // Left: clock and notification
         leftWidgets: [
-            Workspaces {},
-        ]
-        
-        centerWidgets: [
             Clock {}
         ]
         
+        // Center: workspaces
+        centerWidgets: [
+            Workspaces {}
+        ]
+        
+        // Right: system info
         rightWidgets: [
             SystemInfo {}
         ]
