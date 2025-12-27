@@ -1,161 +1,207 @@
 import QtQuick
 import Quickshell
-import Quickshell.Services.UPower // <--- The library you just installed
-import "../theme"
+import Quickshell.Services.UPower
+import "../../theme"
+
+/*
+ * Advanced Battery Component
+ * Merged logic: Scaling, Preferred Battery, Granular Icons
+ */
 
 Item {
     id: root
-    width: contentRow.implicitWidth + 24
-    height: 24
 
-    // --- UPOWER LOGIC ---
+    // --- CONFIGURATION ---
+    // Mimicking SettingsData.batteryChargeLimit (set to 80 if you cap your battery)
+    property int chargeLimit: 100 
+    readonly property real scale: 100 / chargeLimit
     
-    // 1. Find the first actual battery
-    readonly property var batteryDevice: {
-        const devices = UPower.devices.values
-        // Search for a device where type is Battery (2)
-        return devices.find(dev => dev.type === UPowerDeviceType.Battery) || null
+    property string preferredBatteryOverride: Quickshell.env("DMS_PREFERRED_BATTERY")
+    
+    // Toggle for time view
+    property bool showTime: false
+
+    // --- ADVANCED UPOWER LOGIC ---
+
+    // 1. Filter for laptop batteries
+    readonly property var batteries: UPower.devices.values.filter(dev => dev.type === UPowerDeviceType.Battery)
+    readonly property bool batteryAvailable: batteries.length > 0
+    readonly property bool usePreferred: preferredBatteryOverride && preferredBatteryOverride.length > 0
+
+    // 2. Find the main device
+    readonly property var device: {
+        var preferredDev;
+        if (usePreferred) {
+            preferredDev = batteries.find(dev => dev.nativePath.toLowerCase().includes(preferredBatteryOverride.toLowerCase()));
+        }
+        return preferredDev || batteries[0] || null;
     }
 
-    readonly property bool hasBattery: batteryDevice !== null
-    
-    // 2. Bind properties directly to the device
-    // UPower gives percentage as 0.0 to 1.0, so multiply by 100
-    readonly property int batteryLevel: hasBattery ? Math.round(batteryDevice.percentage * 100) : 0
-    readonly property bool isCharging: hasBattery && batteryDevice.state === UPowerDeviceState.Charging
-    readonly property bool isFull: hasBattery && batteryDevice.state === UPowerDeviceState.FullyCharged
-
-    // 3. Helper for Time Remaining
-    function getTimeString() {
-        if (!hasBattery) return "No Battery"
+    // 3. Calculate Scaled Level
+    readonly property int batteryLevel: {
+        if (!batteryAvailable) return 0;
         
-        let seconds = 0
+        // If UPower gives us a capacity, use energy/capacity for accuracy
+        if (device && device.energyCapacity > 0) {
+             return Math.round((device.energy * 100) / device.energyCapacity * root.scale);
+        }
+        
+        // Fallback to simple percentage
+        if (device) {
+            return Math.round(device.percentage * 100 * root.scale);
+        }
+        return 0;
+    }
+
+    readonly property bool isCharging: batteryAvailable && batteries.some(b => b.state === UPowerDeviceState.Charging)
+    readonly property bool isPluggedIn: batteryAvailable && batteries.every(b => b.state !== UPowerDeviceState.Discharging)
+    readonly property bool isLowBattery: batteryAvailable && batteryLevel <= 20
+    
+    // 4. Rate calculation for time estimation
+    readonly property real changeRate: {
+        if (usePreferred && device && device.ready) return device.changeRate;
+        return batteries.length > 0 ? batteries.reduce((sum, b) => sum + b.changeRate, 0) : 0;
+    }
+
+    readonly property real batteryEnergy: {
+        if (usePreferred && device && device.ready) return device.energy;
+        return batteries.length > 0 ? batteries.reduce((sum, b) => sum + b.energy, 0) : 0;
+    }
+
+    readonly property real batteryCapacity: {
+        if (usePreferred && device && device.ready) return device.energyCapacity;
+        return batteries.length > 0 ? batteries.reduce((sum, b) => sum + b.energyCapacity, 0) : 0;
+    }
+
+    // --- FORMATTERS ---
+
+    function formatTimeRemaining() {
+        if (!batteryAvailable) return "No Battery";
+        
+        // Calculate seconds remaining
+        let seconds = 0;
+        
+        // If UPower gives us direct time (often more accurate than manual calc)
+        if (device.timeToEmpty > 0 && !isCharging) seconds = device.timeToEmpty;
+        else if (device.timeToFull > 0 && isCharging) seconds = device.timeToFull;
+        else {
+            // Manual calculation fallback
+            let totalTime = (isCharging) ? ((batteryCapacity - batteryEnergy) / changeRate) : (batteryEnergy / changeRate);
+            seconds = Math.abs(totalTime * 3600);
+        }
+
+        if (!seconds || seconds <= 0 || seconds > 86400) return "Calculating...";
+
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const suffix = isCharging ? "until full" : "remaining";
+
+        return hours > 0 ? `${hours}h ${minutes}m ${suffix}` : `${minutes}m ${suffix}`;
+    }
+
+    // The Fancy Icon Logic you asked for
+    function getBatteryIcon() {
+        if (!batteryAvailable) return ""; // Plug
+
         if (isCharging) {
-            seconds = batteryDevice.timeToFull
-        } else {
-            seconds = batteryDevice.timeToEmpty
+            if (batteryLevel >= 90) return "";
+            if (batteryLevel >= 80) return "";
+            if (batteryLevel >= 60) return "";
+            if (batteryLevel >= 50) return "";
+            if (batteryLevel >= 30) return "";
+            if (batteryLevel >= 20) return "";
+            return "";
+        }
+        
+        if (isPluggedIn) {
+            // Plugged in but not charging (often happens at 100% or held charge)
+            return ""; 
         }
 
-        if (seconds <= 0) {
-            if (isFull) return "Fully Charged"
-            return "Calculating..."
-        }
-
-        const hours = Math.floor(seconds / 3600)
-        const minutes = Math.floor((seconds % 3600) / 60)
-
-        if (hours > 0) return `${hours}h ${minutes}m`
-        return `${minutes}m`
+        if (batteryLevel >= 95) return "";
+        if (batteryLevel >= 85) return ""; // You might need to adjust these glyphs depending on your specific Nerd Font version
+        if (batteryLevel >= 70) return "";
+        if (batteryLevel >= 55) return "";
+        if (batteryLevel >= 40) return "";
+        if (batteryLevel >= 25) return "";
+        return "";
     }
 
     // --- VISUALS ---
 
-    function getBatteryIcon() {
-        if (!hasBattery) return "" // Plug icon
-        
-        // Charging Icons
-        if (isCharging) {
-            if (batteryLevel >= 90) return ""
-            if (batteryLevel >= 60) return ""
-            if (batteryLevel >= 30) return ""
-            return "" 
-        }
+    // Dynamic width container
+    width: contentContainer.width
+    height: 32
 
-        // Discharging Icons
-        if (batteryLevel >= 90) return ""
-        if (batteryLevel >= 65) return ""
-        if (batteryLevel >= 40) return ""
-        if (batteryLevel >= 15) return ""
-        return ""
-    }
-
-    function getBatteryColor() {
-        if (isCharging) return Colors.accent
-        if (batteryLevel <= 20) return "#ff5555" // Low battery red
-        return Colors.foreground
-    }
-
-    // --- POPUP WINDOW ---
-    PanelWindow {
-        id: popup
-        visible: false
-        width: 160
-        height: 80
-        color: "transparent"
-
-        Rectangle {
-            anchors.fill: parent
-            radius: 12
-            color: Qt.rgba(Colors.surface.r, Colors.surface.g, Colors.surface.b, 0.95)
-            border.width: 1
-            border.color: Colors.accent
-
-            Column {
-                anchors.centerIn: parent
-                spacing: 4
-
-                // Status
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: root.isCharging ? "Charging" : (root.isFull ? "Full" : "Discharging")
-                    color: Colors.foreground
-                    font.family: "CodeNewRoman Nerd Font Propo"
-                    font.pixelSize: 14
-                    font.bold: true
-                }
-                
-                // Time Remaining
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: root.getTimeString()
-                    color: Qt.rgba(Colors.foreground.r, Colors.foreground.g, Colors.foreground.b, 0.6)
-                    font.family: "CodeNewRoman Nerd Font Propo"
-                    font.pixelSize: 12
-                }
-            }
-        }
-    }
-
-    // --- BAR BUTTON ---
     Rectangle {
-        anchors.fill: parent
-        radius: 12
-        color: popup.visible 
-               ? Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.4) 
-               : Qt.rgba(Colors.surface.r, Colors.surface.g, Colors.surface.b, 0.3)
+        id: contentContainer
+        anchors.centerIn: parent
+        
+        width: layout.implicitWidth + 24
+        height: 28
+        radius: 14
+        
+        color: root.showTime 
+            ? Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.2)
+            : Qt.rgba(Colors.surface.r, Colors.surface.g, Colors.surface.b, 0.3)
+            
         border.width: 1
-        border.color: Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.2)
+        border.color: root.showTime || (isLowBattery && !isCharging)
+            ? (isLowBattery && !isCharging ? "#f53c3c" : Colors.accent)
+            : Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.2)
+            
+        Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
+        Behavior on color { ColorAnimation { duration: 200 } }
+        Behavior on border.color { ColorAnimation { duration: 200 } }
 
         Row {
-            id: contentRow
+            id: layout
             anchors.centerIn: parent
             spacing: 8
-
+            
             Text {
                 text: getBatteryIcon()
-                color: getBatteryColor()
+                // Logic for icon color
+                color: {
+                    if (!batteryAvailable) return Colors.widgetIconColor || Colors.foreground;
+                    if (isLowBattery && !isCharging) return "#f53c3c"; // Error Red
+                    if (isCharging || isPluggedIn) return Colors.accent;
+                    return Colors.foreground;
+                }
+                
                 font.family: "CodeNewRoman Nerd Font Propo"
                 font.pixelSize: 16
                 anchors.verticalCenter: parent.verticalCenter
             }
 
             Text {
-                text: root.batteryLevel + "%"
+                id: label
+                text: root.showTime ? root.formatTimeRemaining() : `${root.batteryLevel}%`
                 color: Colors.foreground
                 font.family: "CodeNewRoman Nerd Font Propo"
-                font.pixelSize: 14
+                font.pixelSize: 13
+                font.bold: true
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
-
+        
         MouseArea {
             anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
             hoverEnabled: true
-            onClicked: popup.visible = !popup.visible
-            onEntered: parent.border.color = Colors.accent
-            onExited: parent.border.color = Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.2)
+            
+            onClicked: root.showTime = !root.showTime
+            
+            onEntered: {
+                if (!root.showTime && (!root.isLowBattery || root.isCharging)) {
+                    parent.border.color = Colors.accent
+                }
+            }
+            onExited: {
+                if (!root.showTime && (!root.isLowBattery || root.isCharging)) {
+                    parent.border.color = Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.2)
+                }
+            }
         }
-        
-        Behavior on color { ColorAnimation { duration: 200 } }
     }
 }

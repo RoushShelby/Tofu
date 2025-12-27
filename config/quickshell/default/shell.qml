@@ -15,6 +15,7 @@ ShellRoot {
         ]
 
         rightWidgets: [
+            Battery {},
             Workspaces {}
         ]
     }
