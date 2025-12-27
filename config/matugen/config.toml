@@ -4,3 +4,7 @@ reload_apps = false
 [templates.quickshell]
 input_path = "templates/quickshell.qml"
 output_path = "../quickshell/default/theme/Colors.qml"
+
+[templates.rofi]
+input_path = "~/Tofu/config/matugen/templates/rofi-colors.rasi"
+output_path = "~/.config/rofi/style.rasi"
