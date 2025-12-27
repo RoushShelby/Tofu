@@ -11,7 +11,7 @@ ShellRoot {
         ]
 
         centerWidgets: [
-            Testing {}
+            Dropdown {}
         ]
 
         rightWidgets: [
