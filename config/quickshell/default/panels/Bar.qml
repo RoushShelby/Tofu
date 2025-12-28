@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import "../theme"
+import "../widgets" // <--- FIXED: Import is now at the top!
 
 PanelWindow {
     id: panel
@@ -30,6 +31,7 @@ PanelWindow {
         radius: 10
         color: Qt.rgba(Colors.background.r, Colors.background.g, Colors.background.b, 0.6)
         
+        // Shadow layer 1
         Rectangle {
             anchors.fill: parent
             anchors.margins: -1
@@ -40,6 +42,7 @@ PanelWindow {
             z: -1
         }
         
+        // Shadow layer 2
         Rectangle {
             anchors.fill: parent
             anchors.margins: -2
@@ -78,6 +81,13 @@ PanelWindow {
                     verticalCenter: parent.verticalCenter
                 }
                 spacing: 5
+
+                // --- VISUALIZER ADDED HERE ---
+                Visualizer {
+                    barCount: 12
+                    maxHeight: 20
+                    // This makes it sit nicely in the middle
+                }
                 
                 Component.onCompleted: {
                     for (var i = 0; i < centerWidgets.length; i++) {

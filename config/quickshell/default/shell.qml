@@ -15,6 +15,7 @@ ShellRoot {
         ]
 
         rightWidgets: [
+            Bluetooth {},
             Battery {},
             Workspaces {}
         ]

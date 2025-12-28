@@ -3,9 +3,13 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    
+    # We still keep the official repo for the latest Quickshell binary
+    quickshell.url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
+    quickshell.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, ... }: {
+  outputs = { self, nixpkgs, quickshell, ... }: {
     homeManagerModules = {
       default = import ./modules/home;
       quickshell = import ./modules/home/quickshell.nix;
@@ -18,9 +22,13 @@
       in
       pkgs.mkShell {
         packages = with pkgs; [
-          quickshell
+          quickshell.packages.x86_64-linux.default
           matugen
           fish
+          cava
+          # Bluetooth Tools
+          bluez   # For bluetoothctl (used by the widget to check status)
+          blueman # For blueman-manager (the GUI the widget launches)
         ];
 
         shellHook = ''
