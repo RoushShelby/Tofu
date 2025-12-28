@@ -24,6 +24,12 @@
         let
           pkgs = mkPkgs system;
           quickshellPkg = quickshell.packages.${system}.default;
+          
+          # Define fonts to include (Using corrected kebab-case name)
+          fontPkgs = with pkgs; [
+             nerd-fonts.code-new-roman
+             nerd-fonts.symbols-only
+          ];
         in
         pkgs.stdenv.mkDerivation {
           pname = "quickshell-tofu";
@@ -33,7 +39,7 @@
 
           nativeBuildInputs = with pkgs; [ makeWrapper ];
 
-          buildInputs = [ quickshellPkg ];
+          buildInputs = [ quickshellPkg ] ++ fontPkgs;
 
           installPhase = ''
             mkdir -p $out/share/quickshell-tofu
@@ -136,6 +142,8 @@
               cava
               bluez
               blueman
+              # Fix: Use correct kebab-case attribute
+              nerd-fonts.code-new-roman
             ];
 
             shellHook = ''
@@ -145,6 +153,10 @@
               echo "  quickshell -c config/quickshell/default    # Run Quickshell"
               echo "  ./scripts/apply-theme.sh <wallpaper>       # Apply theme"
               echo ""
+              
+              # Fix: Point to the correct package path in font config
+              export FONTCONFIG_FILE=${pkgs.makeFontsConf { fontDirectories = [ pkgs.nerd-fonts.code-new-roman ]; }}
+              
               exec fish
             '';
           };

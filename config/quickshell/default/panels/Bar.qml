@@ -11,28 +11,32 @@ PanelWindow {
     property list<Item> centerWidgets
     property list<Item> rightWidgets
     
+    // Moved these up to avoid syntax errors with anchors
+    implicitHeight: 52
+    color: "transparent"
+
     anchors {
         top: true
         left: true
         right: true
     }
     
-    implicitHeight: 42
-    color: "transparent"
-    
     Rectangle {
         id: barBackground
         
         anchors {
             fill: parent
-            margins: 5
-            leftMargin: 10
-            rightMargin: 10
+            margins: 6
+            leftMargin: 12
+            rightMargin: 12
         }
         
-        radius: 10
+        radius: 14
+        
+        // Background color
         color: Qt.rgba(Colors.background.r, Colors.background.g, Colors.background.b, 0.6)
         
+        // Shadow/Border effect
         Rectangle {
             anchors.fill: parent
             anchors.margins: -1
@@ -43,6 +47,7 @@ PanelWindow {
             z: -1
         }
         
+        // Outer Glow
         Rectangle {
             anchors.fill: parent
             anchors.margins: -2
@@ -53,10 +58,12 @@ PanelWindow {
             z: -2
         }
         
+        // Widget Container
         Item {
             anchors.fill: parent
             anchors.margins: 7
             
+            // --- Left Widgets ---
             Row {
                 id: leftRow
                 anchors.left: parent.left
@@ -70,6 +77,7 @@ PanelWindow {
                 }
             }
             
+            // --- Center Widgets ---
             Row {
                 id: centerRow
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -83,6 +91,7 @@ PanelWindow {
                 }
             }
             
+            // --- Right Widgets ---
             Row {
                 id: rightRow
                 anchors.right: parent.right
