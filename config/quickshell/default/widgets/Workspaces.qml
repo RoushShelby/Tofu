@@ -4,20 +4,35 @@ import "../components/containers" as Containers
 import "../theme"
 
 Containers.Section {
-    spacing: 6
+    spacing: 4
+    
+    property bool showEmpty: true
+    
+    readonly property int maxWorkspaceId: {
+        let max = 0;
+        for (let i = 0; i < Hyprland.workspaces.values.length; i++) {
+            if (Hyprland.workspaces.values[i].id > max) {
+                max = Hyprland.workspaces.values[i].id;
+            }
+        }
+        return Math.max(max, 1);
+    }
     
     Repeater {
-        model: Hyprland.workspaces
+        model: maxWorkspaceId
         
         delegate: Rectangle {
-            required property HyprlandWorkspace modelData
+            property int workspaceId: index + 1
+            property var workspace: getWorkspace(workspaceId)
+            property bool exists: workspace !== null
+            property bool isEmpty: !exists || workspace.toplevels.length === 0
+            property bool isActive: exists && (workspace.focused || workspace.active)
             
-            width: 16
+            visible: showEmpty || !isEmpty
+            
+            width: isActive ? 24 : 16
             height: 16
             radius: 8
-            
-            property bool isEmpty: modelData.toplevels.length === 0
-            property bool isActive: modelData.focused || modelData.active
             
             color: {
                 if (isActive) return Colors.accent
@@ -28,20 +43,25 @@ Containers.Section {
             border.width: isEmpty ? 1 : 0
             border.color: Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.3)
             
-            Behavior on color {
-                ColorAnimation { duration: 200 }
-            }
+            Behavior on color { ColorAnimation { duration: 200 } }
+            Behavior on border.color { ColorAnimation { duration: 200 } }
+            Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
             
-            Behavior on border.color {
-                ColorAnimation { duration: 200 }
+            Text {
+                visible: parent.isActive && parent.width > 18
+                anchors.centerIn: parent
+                text: workspaceId
+                font.family: "CodeNewRoman Nerd Font Propo"
+                font.pixelSize: 10
+                font.bold: true
+                color: Colors.background
             }
             
             MouseArea {
-                id: mouseArea
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: Hyprland.dispatch("workspace", modelData.id.toString())
+                onClicked: Hyprland.dispatch("workspace", workspaceId.toString())
                 
                 onEntered: {
                     if (!parent.isActive) {
@@ -51,14 +71,20 @@ Containers.Section {
                 
                 onExited: {
                     if (!parent.isActive) {
-                        if (parent.isEmpty) {
-                            parent.color = "transparent"
-                        } else {
-                            parent.color = Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.4)
-                        }
+                        parent.color = parent.isEmpty ? "transparent" 
+                            : Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.4)
                     }
                 }
             }
         }
+    }
+    
+    function getWorkspace(id) {
+        for (let i = 0; i < Hyprland.workspaces.values.length; i++) {
+            if (Hyprland.workspaces.values[i].id === id) {
+                return Hyprland.workspaces.values[i];
+            }
+        }
+        return null;
     }
 }

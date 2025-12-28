@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import "../theme"
-import "../widgets" // <--- FIXED: Import is now at the top!
+import "../widgets"
 
 PanelWindow {
     id: panel
@@ -22,16 +22,17 @@ PanelWindow {
     
     Rectangle {
         id: barBackground
+        
         anchors {
             fill: parent
             margins: 5
             leftMargin: 10
             rightMargin: 10
         }
+        
         radius: 10
         color: Qt.rgba(Colors.background.r, Colors.background.g, Colors.background.b, 0.6)
         
-        // Shadow layer 1
         Rectangle {
             anchors.fill: parent
             anchors.margins: -1
@@ -42,7 +43,6 @@ PanelWindow {
             z: -1
         }
         
-        // Shadow layer 2
         Rectangle {
             anchors.fill: parent
             anchors.margins: -2
@@ -57,13 +57,10 @@ PanelWindow {
             anchors.fill: parent
             anchors.margins: 7
             
-            // Left section
             Row {
                 id: leftRow
-                anchors {
-                    left: parent.left
-                    verticalCenter: parent.verticalCenter
-                }
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
                 spacing: 5
                 
                 Component.onCompleted: {
@@ -73,21 +70,11 @@ PanelWindow {
                 }
             }
             
-            // Center section
             Row {
                 id: centerRow
-                anchors {
-                    horizontalCenter: parent.horizontalCenter
-                    verticalCenter: parent.verticalCenter
-                }
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
                 spacing: 5
-
-                // --- VISUALIZER ADDED HERE ---
-                Visualizer {
-                    barCount: 12
-                    maxHeight: 20
-                    // This makes it sit nicely in the middle
-                }
                 
                 Component.onCompleted: {
                     for (var i = 0; i < centerWidgets.length; i++) {
@@ -96,13 +83,10 @@ PanelWindow {
                 }
             }
             
-            // Right section
             Row {
                 id: rightRow
-                anchors {
-                    right: parent.right
-                    verticalCenter: parent.verticalCenter
-                }
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
                 spacing: 5
                 
                 Component.onCompleted: {
